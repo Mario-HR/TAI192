@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from typing import Optional
 
 #Personalizacuón del encabezado de la documentación
@@ -20,28 +20,25 @@ usuarios=[
 def home():
     return {'hello':'world FastAPI'}
 
-#Endpoint promedio
-@app.get('/promedio', tags=['Calificación'])
-def promedio():
-    numeros = [1, 2, 3, 4, 5, 6, 7, 8]
-    suma = sum(numeros)
-    promedio = suma / len(numeros)
-    return {'promedio': promedio}
+#Endpoint consulta todos
+@app.get('/todosusuarios', tags=['Operaciones CRUD'])
+def leerUsuarios():
+    return {"Los usuarios registrados son ":usuarios}
 
-#Endpoint parametro obligatorio
-@app.get('/usuario/{id}', tags=['Parametro Obligatorio'])
-def consultaUsuario(id: int):
-    #conexion a la BD
-    #consulta
-    return {'Se encontro el usuario': id}
+@app.post('/usuarios/', tags=['Operaciones CRUD'])
+def agregarUsuario(usuario:dict):
+    for usr in usuarios:
+        if usr["id"]==usuario.get("id"):
+            raise HTTPException(status_code=400, detail="ID ya existe")
+    usuarios.append(usuario)
+    return usuario
 
-#Endpoint parametro opcional
-@app.get('/usuario/', tags=['Parametro Opcional'])
-def consultaUsuario(id: Optional[int]=None):
-    if id is not None:
-        for usuario in usuarios:
-            if usuario["id"] == id:
-                return {"mensaje": "Usuario encontrado", "usuario": usuario}
-        return {"mensaje": f"No se encontró el usuario con el id: {id}"}
-    else:
-        return {"mensaje": "No se ha proporcionado un id"}
+@app.put('/actualizarusuario/', tags=['Operaciones CRUD'])
+def actualizarUsuario(usuario: dict):
+    for usr in usuarios:
+        if usr["id"]==usuario.get("id"):
+            usuarios[usuarios.index(usr)]=usuario
+            return usuario
+        else:
+            raise HTTPException(status_code=404, detail="Usuario no existe")
+            
