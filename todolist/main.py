@@ -21,3 +21,11 @@ tareas=[
 @app.get('/tareas', tags=['Consulta de tareas'])
 def leer_tareas():
     return {"Tareas": tareas}
+
+#Endpoint para obtener una tarea especifica por su ID
+@app.get('/tarea/{id}', tags=['Consulta de tarea específica'])
+def leer_tarea(id: int):
+    for tarea in tareas:
+        if tarea["id"]==id:
+            return tarea
+    raise HTTPException(status_code=404, detail=f"No se ha encontrado la tarea con ID {id}")
