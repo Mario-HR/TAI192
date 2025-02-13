@@ -41,4 +41,13 @@ def actualizarUsuario(usuario: dict):
             return usuario
         else:
             raise HTTPException(status_code=404, detail="Usuario no existe")
+
+@app.delete('/eliminarusuario/{id}', tags=['Operaciones CRUD'])
+def eliminarUsuario(id: int):
+    for usr in usuarios:
+        if usr["id"]==id:
+            usuarios.remove(usr)
+            return {"Usuario eliminado con éxito"}
+        else:
+            raise HTTPException(status_code=404, detail="Usuario no existe")
             
