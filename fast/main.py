@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from typing import Optional
+from pydantic import BaseModel
+from typing import Optional,List
 
 #Personalizacuón del encabezado de la documentación
 app=FastAPI(
@@ -8,11 +9,19 @@ app=FastAPI(
     version='1.0.1'
 )
 
+#Modelo de validaciones
+class Usuario(BaseModel):
+    id: int
+    nombre: str
+    edad: int
+    email: str
+
+#Base de datos ficticia
 usuarios=[
-    {"id": 1, "nombre": "mario", "edad": 19},
-    {"id": 2, "nombre": "jose", "edad": 20},
-    {"id": 3, "nombre": "pedro", "edad": 21},
-    {"id": 4, "nombre": "ana", "edad": 37}
+    {"id": 1, "nombre": "mario", "edad": 19, "email": "mario@example.com"},
+    {"id": 2, "nombre": "jose", "edad": 20, "email": "jose@example.com"},
+    {"id": 3, "nombre": "pedro", "edad": 21, "email": "pedro@example.com"},
+    {"id": 4, "nombre": "ana", "edad": 37, "email": "ana@example.com"}
 ]
 
 #Endpoint home
@@ -21,7 +30,7 @@ def home():
     return {'hello':'world FastAPI'}
 
 #Endpoint consulta todos
-@app.get('/todosusuarios', tags=['Operaciones CRUD'])
+@app.get('/todosusuarios', response_model=List[Usuario], tags=['Operaciones CRUD'])
 def leerUsuarios():
     return {"Los usuarios registrados son ":usuarios}
 
@@ -38,9 +47,8 @@ def actualizarUsuario(usuario: dict):
     for usr in usuarios:
         if usr["id"]==usuario.get("id"):
             usuarios[usuarios.index(usr)]=usuario
-            return usuario
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no existe")
+            return usuario    
+    raise HTTPException(status_code=404, detail="Usuario no existe")
 
 @app.delete('/eliminarusuario/{id}', tags=['Operaciones CRUD'])
 def eliminarUsuario(id: int):
@@ -48,6 +56,5 @@ def eliminarUsuario(id: int):
         if usr["id"]==id:
             usuarios.remove(usr)
             return {"Usuario eliminado con éxito"}
-        else:
-            raise HTTPException(status_code=404, detail="Usuario no existe")
+    raise HTTPException(status_code=404, detail="Usuario no existe")
             
