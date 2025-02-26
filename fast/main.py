@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
 from typing import Optional,List
+from models import modeloUsuario
 
 #Personalizacuón del encabezado de la documentación
 app=FastAPI(
@@ -8,13 +8,6 @@ app=FastAPI(
     description='Mario Alberto Hernandez Rodarte',
     version='1.0.1'
 )
-
-#Modelo de validaciones
-class Usuario(BaseModel):
-    id: int
-    nombre: str
-    edad: int
-    email: str
 
 #Base de datos ficticia
 usuarios=[
@@ -30,24 +23,24 @@ def home():
     return {'hello':'world FastAPI'}
 
 #Endpoint consulta todos
-@app.get('/todosusuarios', response_model=List[Usuario], tags=['Operaciones CRUD'])
+@app.get('/todosusuarios', response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
 def leerUsuarios():
-    return {"Los usuarios registrados son ":usuarios}
+    return usuarios
 
-@app.post('/usuarios/', tags=['Operaciones CRUD'])
-def agregarUsuario(usuario:dict):
+@app.post('/usuario/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
+def agregarUsuario(usuario:modeloUsuario):
     for usr in usuarios:
         if usr["id"]==usuario.get("id"):
             raise HTTPException(status_code=400, detail="ID ya existe")
     usuarios.append(usuario)
     return usuario
 
-@app.put('/actualizarusuario/', tags=['Operaciones CRUD'])
-def actualizarUsuario(usuario: dict):
-    for usr in usuarios:
-        if usr["id"]==usuario.get("id"):
-            usuarios[usuarios.index(usr)]=usuario
-            return usuario    
+@app.put('/usuarios/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
+def actualizarUsuario(usuarioActualizado: modeloUsuario):
+    for index,usr in enumerate(usuarios):
+        if usr["id"]==usuarioActualizado.id:
+            usuarios[index]=usuarioActualizado.model_dump()
+            return usuarios[index]
     raise HTTPException(status_code=404, detail="Usuario no existe")
 
 @app.delete('/eliminarusuario/{id}', tags=['Operaciones CRUD'])
@@ -57,4 +50,3 @@ def eliminarUsuario(id: int):
             usuarios.remove(usr)
             return {"Usuario eliminado con éxito"}
     raise HTTPException(status_code=404, detail="Usuario no existe")
-            
