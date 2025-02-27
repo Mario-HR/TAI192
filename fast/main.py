@@ -1,6 +1,8 @@
 from fastapi import FastAPI, HTTPException
+from fastapi.responses import JSONResponse
 from typing import Optional,List
-from models import modeloUsuario
+from pydanticModels import modeloUsuario, modeloAutentificacion
+from genToken import createToken
 
 #Personalizacuón del encabezado de la documentación
 app=FastAPI(
@@ -21,6 +23,16 @@ usuarios=[
 @app.get('/', tags=['Hola Mundo'])
 def home():
     return {'hello':'world FastAPI'}
+
+#Endpoint de autenticacion
+@app.post('/auth', tags=['Autentificacion'])
+def login(autorizacion:modeloAutentificacion):
+    if autorizacion.email == "mario@example.com" and autorizacion.passwd == "12345678":
+        token:str=createToken(autorizacion.model_dump())
+        print(token)
+        return JSONResponse(content=token)
+    else:
+        return("Aviso: Usuario sin aurorización")
 
 #Endpoint consulta todos
 @app.get('/todosusuarios', response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
