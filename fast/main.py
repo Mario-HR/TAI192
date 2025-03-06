@@ -1,8 +1,9 @@
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
 from typing import Optional,List
 from pydanticModels import modeloUsuario, modeloAutentificacion
 from genToken import createToken
+from middleware import BearerJWT
 
 #Personalizacuón del encabezado de la documentación
 app=FastAPI(
@@ -35,7 +36,7 @@ def login(autorizacion:modeloAutentificacion):
         return("Aviso: Usuario sin aurorización")
 
 #Endpoint consulta todos
-@app.get('/todosusuarios', response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
+@app.get('/todosusuarios', dependencies={Depends(BearerJWT())}, response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
 def leerUsuarios():
     return usuarios
 
