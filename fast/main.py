@@ -4,6 +4,8 @@ from typing import Optional,List
 from pydanticModels import modeloUsuario, modeloAutentificacion
 from genToken import createToken
 from middleware import BearerJWT
+from db.connection import Session,engine,Base
+from models.modelsDb import User
 
 #Personalizacuón del encabezado de la documentación
 app=FastAPI(
@@ -11,6 +13,8 @@ app=FastAPI(
     description='Mario Alberto Hernandez Rodarte',
     version='1.0.1'
 )
+
+Base.metadata.create_all(bind=engine)
 
 #Base de datos ficticia
 usuarios=[
