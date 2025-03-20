@@ -46,11 +46,16 @@ def leerUsuarios():
 
 @app.post('/usuario/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
 def agregarUsuario(usuario:modeloUsuario):
-    for usr in usuarios:
-        if usr["id"]==usuario.get("id"):
-            raise HTTPException(status_code=400, detail="ID ya existe")
-    usuarios.append(usuario)
-    return usuario
+    db=Session()
+    try:
+        db.add(User(**usuario.model_dump()))
+        db.commit()
+        return JSONResponse(status_code=201,content={"mesage":"Usuario guardado","usuario": usuario.model_dump()})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500,content={"message": "Error al guardar usuario", "Exception": str(e)})
+    finally:
+        db.close()
 
 @app.put('/usuarios/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
 def actualizarUsuario(usuarioActualizado: modeloUsuario):
