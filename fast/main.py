@@ -1,5 +1,6 @@
 from fastapi import FastAPI, HTTPException, Depends
 from fastapi.responses import JSONResponse
+from fastapi.encoders import jsonable_encoder
 from typing import Optional,List
 from pydanticModels import modeloUsuario, modeloAutentificacion
 from genToken import createToken
@@ -15,14 +16,6 @@ app=FastAPI(
 )
 
 Base.metadata.create_all(bind=engine)
-
-#Base de datos ficticia
-usuarios=[
-    {"id": 1, "nombre": "mario", "edad": 19, "email": "mario@example.com"},
-    {"id": 2, "nombre": "jose", "edad": 20, "email": "jose@example.com"},
-    {"id": 3, "nombre": "pedro", "edad": 21, "email": "pedro@example.com"},
-    {"id": 4, "nombre": "ana", "edad": 37, "email": "ana@example.com"}
-]
 
 #Endpoint home
 @app.get('/', tags=['Hola Mundo'])
@@ -42,7 +35,31 @@ def login(autorizacion:modeloAutentificacion):
 #Endpoint consulta todos
 @app.get('/todosusuarios', dependencies={Depends(BearerJWT())}, response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
 def leerUsuarios():
-    return usuarios
+    db=Session()
+    try:
+        consultauno=db.query(User).all()
+        if not consultauno:
+            return JSONResponse(content={"message": "Usuuario no encontrado"})
+        return JSONResponse(content=jsonable_encoder(consultauno))
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": "Error al consultar", "Exception": str(e)})
+    finally:
+        db.close()
+
+#Endpoint buscar por ID
+@app.get('/usuario/{id}', tags=['Operaciones CRUD'])
+def buscarUno(id:int):
+    db=Session()
+    try:
+        consulta=db.query(User).filter(User.id==id).first()
+        if consulta:
+            return JSONResponse(content=jsonable_encoder(consulta))
+        else:
+            return JSONResponse(status_code=404, content={"message": "Usuario no encontrado"})
+    except Exception as e:
+        return JSONResponse(status_code=500, content={"message": "Error al buscar usuario", "Exception": str(e)})
+    finally:
+        db.close()
 
 @app.post('/usuario/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
 def agregarUsuario(usuario:modeloUsuario):
