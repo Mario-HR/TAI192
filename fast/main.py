@@ -33,7 +33,7 @@ def login(autorizacion:modeloAutentificacion):
         return("Aviso: Usuario sin aurorización")
 
 #Endpoint consulta todos
-@app.get('/todosusuarios', dependencies={Depends(BearerJWT())}, response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
+@app.get('/todosusuarios', response_model=List[modeloUsuario], tags=['Operaciones CRUD'])
 def leerUsuarios():
     db=Session()
     try:
@@ -47,7 +47,7 @@ def leerUsuarios():
         db.close()
 
 #Endpoint buscar por ID
-@app.get('/usuario/{id}', tags=['Operaciones CRUD'])
+@app.get('/usuario/{id}', response_model=modeloUsuario, tags=['Operaciones CRUD'])
 def buscarUno(id:int):
     db=Session()
     try:
@@ -61,7 +61,8 @@ def buscarUno(id:int):
     finally:
         db.close()
 
-@app.post('/usuario/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
+#Endpoint para agregar usuario
+@app.post('/agregarusuario/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
 def agregarUsuario(usuario:modeloUsuario):
     db=Session()
     try:
@@ -74,18 +75,39 @@ def agregarUsuario(usuario:modeloUsuario):
     finally:
         db.close()
 
-@app.put('/usuarios/', response_model=modeloUsuario, tags=['Operaciones CRUD'])
-def actualizarUsuario(usuarioActualizado: modeloUsuario):
-    for index,usr in enumerate(usuarios):
-        if usr["id"]==usuarioActualizado.id:
-            usuarios[index]=usuarioActualizado.model_dump()
-            return usuarios[index]
-    raise HTTPException(status_code=404, detail="Usuario no existe")
+#Endpoint para actualizar usuario
+@app.put('/actualizarusuario/{id}', response_model=modeloUsuario, tags=['Operaciones CRUD'])
+def actualizarUsuario(id:int,usuarioActualizado: modeloUsuario):
+    db=Session()
+    try:
+        usuario=db.query(User).filter(User.id==id).first()
+        if usuario:
+            usuario.name=usuarioActualizado.name
+            usuario.age=usuarioActualizado.age
+            usuario.email=usuarioActualizado.email
+            db.commit()
+            return JSONResponse(status_code=200, content={"message":"Usuario actualizado con éxito","usuario": usuarioActualizado.model_dump()})
+        else:
+            return JSONResponse(status_code=404, content={"message": "Usuario no encontrado"})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"message": "Error al actualizar usuario", "Exception": str(e)})
+    finally:
+        db.close()
 
 @app.delete('/eliminarusuario/{id}', tags=['Operaciones CRUD'])
 def eliminarUsuario(id: int):
-    for usr in usuarios:
-        if usr["id"]==id:
-            usuarios.remove(usr)
-            return {"Usuario eliminado con éxito"}
-    raise HTTPException(status_code=404, detail="Usuario no existe")
+    db=Session()
+    try:
+        usuario=db.query(User).filter(User.id==id).first()
+        if usuario:
+            db.delete(usuario)
+            db.commit()
+            return JSONResponse(status_code=200, content={"message":"Usuario eliminado con éxito"})
+        else:
+            return JSONResponse(status_code=404, content={"message": "Usuario no encontrado"})
+    except Exception as e:
+        db.rollback()
+        return JSONResponse(status_code=500, content={"message": "Error al eliminar usuario", "Exception": str(e)})
+    finally:
+        db.close()
